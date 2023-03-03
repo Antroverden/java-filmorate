@@ -16,11 +16,12 @@ import java.util.HashMap;
 public class FilmController {
 
     private final HashMap<Integer, Film> films = new HashMap<>();
-    int id = 0;
+    private int id = 0;
+    private static final LocalDate DATE_OF_FIRST_FILM_RELEASE = LocalDate.of(1895, 12, 28);
 
     @PostMapping
     public Film addFilm(@Valid @RequestBody Film film) {
-        if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+        if (film.getReleaseDate().isBefore(DATE_OF_FIRST_FILM_RELEASE)) {
             log.warn("Ошибка валидации даты релиза");
             throw new ValidationException("Дата релиза должна быть после 28 декабря 1895 года ");
         }
