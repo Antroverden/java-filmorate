@@ -16,13 +16,13 @@ import java.util.Set;
 public class User {
     private final Set<Integer> friends = new HashSet<>();
     private int id;
-    @NotBlank
-    @Email
+    @NotBlank(message = "Адрес электронной почты не может состоять из пробелов")
+    @Email(message = "Адрес электронной почты составлен неправильно")
     private String email;
-    @NotBlank
-    @NoSpaces
+    @NotBlank(message = "Логин не может состоять из пробелов")
+    @NoSpaces(message = "В логине не должно быть пробелов")
     private String login;
     private String name;
-    @Past
+    @Past(message = "Дата дня рождения должна быть в прошлом")
     private LocalDate birthday;
 }
