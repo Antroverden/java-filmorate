@@ -1,9 +1,8 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -12,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Set;
 
 @Service
+@Slf4j
 public class FilmService {
 
     public static final String DATE_OF_FIRST_FILM_RELEASE = "28.12.1895";
@@ -43,7 +43,10 @@ public class FilmService {
         if (getFilmLikes(filmId).contains(userWhoLiked)) {
             getFilmLikes(filmId).remove(userWhoLiked);
             return getFilmById(filmId);
-        } else throw new NotFoundException("Пользователь отсутствует среди лайкнувших фильм");
+        } else {
+            log.warn("Ошибка валидации наличия пользователя");
+            throw new NotFoundException("Пользователь отсутствует среди лайкнувших фильм");
+        }
     }
 
     private Set<Integer> getFilmLikes(int filmId) {
@@ -64,6 +67,9 @@ public class FilmService {
 
     public Film getFilmById(int id) {
         if (filmStorage.getFilms().containsKey(id)) return filmStorage.getFilms().get(id);
-        else throw new NotFoundException("Фильм с таким айди отсутствует");
+        else {
+            log.warn("Ошибка валидации наличия фильма");
+            throw new NotFoundException("Фильм с таким айди отсутствует");
+        }
     }
 }

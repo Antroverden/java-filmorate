@@ -1,9 +1,8 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -13,6 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Service
+@Slf4j
 public class UserService {
     private final UserStorage userStorage;
 
@@ -41,7 +41,10 @@ public class UserService {
             getUserById(idUser).getFriends().add(idFriend);
             getUserById(idFriend).getFriends().add(idUser);
             return getUserById(idUser);
-        } else throw new NotFoundException("Юзера с таким айди нет");
+        } else {
+            log.warn("Ошибка валидации наличия друга юзера");
+            throw new NotFoundException("Друга юзера с таким айди нет");
+        }
     }
 
     public User removeFriend(int id, int id2) {
@@ -64,7 +67,10 @@ public class UserService {
 
     public User getUserById(int id) {
         if (userStorage.getUsers().containsKey(id)) return userStorage.getUsers().get(id);
-        else throw new NotFoundException("Юзера с таким айди нет");
+        else {
+            log.warn("Ошибка валидации наличия юзера");
+            throw new NotFoundException("Юзера с таким айди нет");
+        }
     }
 
     public ArrayList<User> getUserFriends(int userId) {
