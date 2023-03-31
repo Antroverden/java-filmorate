@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
@@ -42,7 +43,7 @@ public class FilmService {
         if (getFilmLikes(filmId).contains(userWhoLiked)) {
             getFilmLikes(filmId).remove(userWhoLiked);
             return getFilmById(filmId);
-        } else throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        } else throw new NotFoundException("Пользователь отсутствует среди лайкнувших фильм");
     }
 
     private Set<Integer> getFilmLikes(int filmId) {
@@ -63,6 +64,6 @@ public class FilmService {
 
     public Film getFilmById(int id) {
         if (filmStorage.getFilms().containsKey(id)) return filmStorage.getFilms().get(id);
-        else throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        else throw new NotFoundException("Фильм с таким айди отсутствует");
     }
 }

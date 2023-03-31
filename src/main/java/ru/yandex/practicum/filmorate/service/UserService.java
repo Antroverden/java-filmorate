@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -40,7 +41,7 @@ public class UserService {
             getUserById(idUser).getFriends().add(idFriend);
             getUserById(idFriend).getFriends().add(idUser);
             return getUserById(idUser);
-        } else throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        } else throw new NotFoundException("Юзера с таким айди нет");
     }
 
     public User removeFriend(int id, int id2) {
@@ -63,7 +64,7 @@ public class UserService {
 
     public User getUserById(int id) {
         if (userStorage.getUsers().containsKey(id)) return userStorage.getUsers().get(id);
-        else throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        else throw new NotFoundException("Юзера с таким айди нет");
     }
 
     public ArrayList<User> getUserFriends(int userId) {
