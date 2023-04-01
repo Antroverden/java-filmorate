@@ -8,13 +8,13 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Service
 @Slf4j
 public class FilmService {
 
-    public static final String DATE_OF_FIRST_FILM_RELEASE = "28.12.1895";
     private final FilmStorage filmStorage;
 
     @Autowired
@@ -30,7 +30,7 @@ public class FilmService {
         return filmStorage.updateFilm(film);
     }
 
-    public ArrayList<Film> getFilms() {
+    public List<Film> getFilms() {
         return new ArrayList<>(filmStorage.getFilms().values());
     }
 
@@ -53,7 +53,7 @@ public class FilmService {
         return getFilmById(filmId).getLikes();
     }
 
-    public ArrayList<Film> getPopularFilms(int count) {
+    public List<Film> getPopularFilms(int count) {
         ArrayList<Film> sortedFilms = new ArrayList<>(getFilms());
         sortedFilms.sort((f1, f2) -> f2.getLikes().size() - f1.getLikes().size());
         if (count == 0) {

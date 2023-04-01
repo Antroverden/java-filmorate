@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -32,7 +33,7 @@ public class UserService {
         return userStorage.updateUser(user);
     }
 
-    public ArrayList<User> getUsers() {
+    public List<User> getUsers() {
         return new ArrayList<>(userStorage.getUsers().values());
     }
 
@@ -53,11 +54,11 @@ public class UserService {
         return getUserById(id);
     }
 
-    private Set<Integer> showFriends(int id) {
+    private Set<Integer> getFriendsById(int id) {
         return getUserById(id).getFriends();
     }
 
-    private ArrayList<User> getUsersByIds(Set<Integer> ids) {
+    private List<User> getUsersByIds(Set<Integer> ids) {
         ArrayList<User> users = new ArrayList<>(ids.size());
         for (int i : ids) {
             users.add(getUserById(i));
@@ -66,20 +67,19 @@ public class UserService {
     }
 
     public User getUserById(int id) {
-        if (userStorage.getUsers().containsKey(id)) return userStorage.getUsers().get(id);
-        else {
+        if (!userStorage.getUsers().containsKey(id)) {
             log.warn("Ошибка валидации наличия юзера");
             throw new NotFoundException("Юзера с таким айди нет");
-        }
+        } else return userStorage.getUsers().get(id);
     }
 
-    public ArrayList<User> getUserFriends(int userId) {
-        return getUsersByIds(showFriends(userId));
+    public List<User> getUserFriends(int userId) {
+        return getUsersByIds(getFriendsById(userId));
     }
 
-    public ArrayList<User> getCommonFriends(int userId, int otherUserId) {
-        Set<Integer> userOneFriends = new HashSet<>(showFriends(userId));
-        userOneFriends.retainAll(showFriends(otherUserId));
+    public List<User> getCommonFriends(int userId, int otherUserId) {
+        Set<Integer> userOneFriends = new HashSet<>(getFriendsById(userId));
+        userOneFriends.retainAll(getFriendsById(otherUserId));
         return getUsersByIds(userOneFriends);
     }
 }
