@@ -66,10 +66,9 @@ public class FilmService {
     }
 
     public Film getFilmById(int id) {
-        if (filmStorage.getFilms().containsKey(id)) return filmStorage.getFilms().get(id);
-        else {
+        if (!filmStorage.getFilms().containsKey(id)) {
             log.warn("Ошибка валидации наличия фильма");
             throw new NotFoundException("Фильм с таким айди отсутствует");
-        }
+        } else return filmStorage.getFilms().get(id);
     }
 }
