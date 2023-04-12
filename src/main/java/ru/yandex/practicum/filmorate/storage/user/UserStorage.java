@@ -5,11 +5,12 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import javax.validation.Valid;
 import java.util.HashMap;
+import java.util.List;
 
 public interface UserStorage {
     User addUser(@Valid @RequestBody User user);
 
     User updateUser(@Valid @RequestBody User user);
 
-    HashMap<Integer, User> getUsers();
+    List<User> getUsers();
 }

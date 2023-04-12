@@ -32,13 +32,13 @@ public class UserService {
     }
 
     public List<User> getUsers() {
-        return new ArrayList<>(userStorage.getUsers().values());
+        return new ArrayList<>(userStorage.getUsers());
     }
 
     public User addFriend(int idUser, int idFriend) {
         if (idFriend > 0) {
-            getUserById(idUser).getFriends().add(idFriend);
-            getUserById(idFriend).getFriends().add(idUser);
+            getUserById(idUser).getFriends();
+            getUserById(idFriend).getFriends();
             return getUserById(idUser);
         } else {
             log.warn("Ошибка валидации наличия друга юзера");
@@ -53,7 +53,7 @@ public class UserService {
     }
 
     private Set<Integer> getFriendsById(int id) {
-        return getUserById(id).getFriends();
+        return getUserById(id).getFriends().keySet();
     }
 
     private List<User> getUsersByIds(Set<Integer> ids) {
@@ -65,7 +65,7 @@ public class UserService {
     }
 
     public User getUserById(int id) {
-        if (!userStorage.getUsers().containsKey(id)) {
+        if (id < 1) {
             log.warn("Ошибка валидации наличия юзера");
             throw new NotFoundException("Юзера с таким айди нет");
         } else return userStorage.getUsers().get(id);
