@@ -1,13 +1,13 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -35,21 +35,22 @@ public class UserService {
         return new ArrayList<>(userStorage.getUsers());
     }
 
-    public User addFriend(int idUser, int idFriend) {
-        if (idFriend > 0) {
-            getUserById(idUser).getFriends();
-            getUserById(idFriend).getFriends();
-            return getUserById(idUser);
+    public HttpStatus addFriend(int idUser, int idFriend) {
+        if ((idFriend > 0) && (userStorage.addFriend(idUser, idFriend))) {
+            return HttpStatus.OK;
         } else {
             log.warn("Ошибка валидации наличия друга юзера");
             throw new NotFoundException("Друга юзера с таким айди нет");
         }
     }
 
-    public User removeFriend(int id, int id2) {
-        getUserById(id).getFriends().remove(id2);
-        getUserById(id2).getFriends().remove(id);
-        return getUserById(id);
+    public HttpStatus removeFriend(int id, int id2) {
+        if (userStorage.removeFriend(id, id2)) {
+            return HttpStatus.OK;
+        } else {
+            log.warn("Ошибка валидации наличия юзера или друга юзера");
+            throw new NotFoundException("Такого Юзера или друга нет");
+        }
     }
 
     private Set<Integer> getFriendsById(int id) {
@@ -68,16 +69,14 @@ public class UserService {
         if (id < 1) {
             log.warn("Ошибка валидации наличия юзера");
             throw new NotFoundException("Юзера с таким айди нет");
-        } else return userStorage.getUsers().get(id);
+        } else return userStorage.getUserById(id);
     }
 
     public List<User> getUserFriends(int userId) {
-        return getUsersByIds(getFriendsById(userId));
+        return userStorage.getUserFriends(userId);
     }
 
     public List<User> getCommonFriends(int userId, int otherUserId) {
-        Set<Integer> userOneFriends = new HashSet<>(getFriendsById(userId));
-        userOneFriends.retainAll(getFriendsById(otherUserId));
-        return getUsersByIds(userOneFriends);
+        return userStorage.getCommonFriends(userId, otherUserId);
     }
 }

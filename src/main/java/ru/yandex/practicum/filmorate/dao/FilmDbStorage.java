@@ -2,12 +2,14 @@ package ru.yandex.practicum.filmorate.dao;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -71,9 +73,12 @@ public class FilmDbStorage implements FilmStorage {
     public Film updateFilm(Film film) {
         String sqlQuery = "update FILM set NAME = ?, DESCRIPTION = ?, RELEASE_DATE = ?, DURATION = ?, RATING_ID = ?" +
                 "where FILM_ID = ?";
-        jdbcTemplate.update(sqlQuery, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(),
+        int rowNum = jdbcTemplate.update(sqlQuery, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(),
                 film.getMpa().getId(), film.getId());
-        return film;
+        if (rowNum == 0) {
+            log.warn("Ошибка валидации наличия фильма");
+            throw new NotFoundException("Фильм с таким айди отсутствует");
+        } else return film;
     }
 
 //    @Override
@@ -91,7 +96,6 @@ public class FilmDbStorage implements FilmStorage {
 //        });
 //        return films;
 //    }
-
 
     private void addGenresToFilms(Map<Integer, Film> films) {
         String queryToAddGenre = "select FILM_ID, FILM_GENRE.GENRE_ID as GENREID, GENRE.NAME" +
@@ -128,13 +132,18 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film getFilmById(int id) {
-        String sqlQuery = "select* from FILM left join RATING on FILM.RATING_ID = RATING.RATING_ID where FILM_ID = ?";
-        Film film = jdbcTemplate.queryForObject(sqlQuery, BeanPropertyRowMapper.newInstance(Film.class), id);
-        Map<Integer, Film> films = new HashMap<>();
-        int filmId = film.getId();
-        films.put(filmId, film);
-        addGenresToFilms(films);
-        return films.get(filmId);
+        try {
+            String sqlQuery = "select* from FILM left join RATING on FILM.RATING_ID = RATING.RATING_ID where FILM_ID = ?";
+            Film film = jdbcTemplate.queryForObject(sqlQuery, BeanPropertyRowMapper.newInstance(Film.class), id);
+            Map<Integer, Film> films = new HashMap<>();
+            int filmId = film.getId();
+            films.put(filmId, film);
+            addGenresToFilms(films);
+            return films.get(filmId);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("Ошибка валидации наличия фильма");
+            throw new NotFoundException("Фильм с таким айди отсутствует");
+        }
     }
 
     private Film mapRowToFilm(ResultSet resultSet, int rowNum) throws SQLException {
@@ -150,16 +159,24 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Mpa getMpaById(int id) {
-        String sqlQuery = "select* from RATING where RATING_ID = ?";
-        return jdbcTemplate.queryForObject(sqlQuery, BeanPropertyRowMapper.newInstance(Mpa.class), id);
+        try {
+            String sqlQuery = "select* from RATING where RATING_ID = ?";
+            return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToMpa, id);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("Ошибка валидации наличия рейтинга");
+            throw new NotFoundException("Рейтинг с таким айди отсутствует");
+        }
     }
 
     @Override
     public List<Mpa> getMpas() {
         String sqlQuery = "select* from RATING";
-        return jdbcTemplate.query(sqlQuery, BeanPropertyRowMapper.newInstance(Mpa.class));
+        return jdbcTemplate.query(sqlQuery, this::mapRowToMpa);
     }
 
+    private Mpa mapRowToMpa(ResultSet resultSet, int rowNum) throws SQLException {
+        return new Mpa(resultSet.getInt("RATING_ID"), resultSet.getString("NAME"));
+    }
 //    private List<Genre> getGenresByFilmId(int id) {
 //        String sqlQuery = "select* from FILM_GENRE where FILM_ID = ?";
 //        return jdbcTemplate.query(sqlQuery, BeanPropertyRowMapper.newInstance(Genre.class), id);
@@ -167,13 +184,22 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Genre getGenreById(int id) {
-        String sqlQuery = "select* from GENRE where GENRE_ID = ?";
-        return jdbcTemplate.queryForObject(sqlQuery, BeanPropertyRowMapper.newInstance(Genre.class), id);
+        try {
+            String sqlQuery = "select* from GENRE where GENRE_ID = ?";
+            return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToGenre, id);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("Ошибка валидации наличия жанра");
+            throw new NotFoundException("Жанр с таким айди отсутствует");
+        }
     }
 
     @Override
     public List<Genre> getGenres() {
         String sqlQuery = "select* from GENRE";
-        return jdbcTemplate.query(sqlQuery, BeanPropertyRowMapper.newInstance(Genre.class));
+        return jdbcTemplate.query(sqlQuery, this::mapRowToGenre);
+    }
+
+    private Genre mapRowToGenre(ResultSet resultSet, int rowNum) throws SQLException {
+        return new Genre(resultSet.getInt("GENRE_ID"), resultSet.getString("NAME"));
     }
 }

@@ -2,10 +2,12 @@ package ru.yandex.practicum.filmorate.dao;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -46,9 +48,12 @@ public class UserDbStorage implements UserStorage {
     public User updateUser(User user) {
         String sqlQuery = "update USERS set LOGIN = ?, NAME = ?, BIRTHDAY = ?, EMAIL = ?" +
                 "where USER_ID = ?";
-        jdbcTemplate.update(sqlQuery, user.getLogin(), user.getName(), Date.valueOf(user.getBirthday()), user.getEmail(),
+        int numRow = jdbcTemplate.update(sqlQuery, user.getLogin(), user.getName(), Date.valueOf(user.getBirthday()), user.getEmail(),
                 user.getId());
-        return user;
+        if (numRow == 0) {
+            log.warn("Ошибка валидации наличия юзера");
+            throw new NotFoundException("Юзер с таким айди отсутствует");
+        } else return user;
     }
 
     @Override
@@ -57,9 +62,15 @@ public class UserDbStorage implements UserStorage {
         return jdbcTemplate.query(sqlQuery, this::mapRowToUser);
     }
 
+    @Override
     public User getUserById(int id) {
-        String sqlQuery = "select* from USERS where USER_ID = ?";
-        return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToUser, id);
+        try {
+            String sqlQuery = "select* from USERS where USER_ID = ?";
+            return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToUser, id);
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("Ошибка валидации наличия юзера");
+            throw new NotFoundException("Юзер с таким айди отсутствует");
+        }
     }
 
     private User mapRowToUser(ResultSet resultSet, int rowNum) throws SQLException {
@@ -70,5 +81,32 @@ public class UserDbStorage implements UserStorage {
                 .birthday(resultSet.getDate("BIRTHDAY").toLocalDate())
                 .email(resultSet.getString("EMAIL"))
                 .build();
+    }
+
+    @Override
+    public boolean addFriend(int userId, int friendId) {
+        String sqlQuery = "insert into FRIENDSHIP(USER_ID, FRIEND_ID)"
+                + "VALUES ( ?, ?)";
+        return jdbcTemplate.update(sqlQuery, userId, friendId) == 1;
+    }
+
+    @Override
+    public boolean removeFriend(int userId, int friendId) {
+        String sqlQuery = "delete from FRIENDSHIP where USER_ID = ? and FRIEND_ID = ?";
+        return jdbcTemplate.update(sqlQuery, userId, friendId) == 1;
+    }
+
+    @Override
+    public List<User> getUserFriends(int userId) {
+        String sqlQuery = "select USERS.USER_ID, LOGIN, NAME, BIRTHDAY, EMAIL" +
+                " from FRIENDSHIP left join USERS on FRIENDSHIP.FRIEND_ID = USERS.USER_ID where FRIENDSHIP.USER_ID = ? ";
+        return jdbcTemplate.query(sqlQuery, this::mapRowToUser, userId);
+    }
+
+    @Override
+    public List<User> getCommonFriends(int userId, int userId2) {
+        String sqlQuery = "select USER_ID, LOGIN, NAME, BIRTHDAY, EMAIL from (select FRIEND_ID as FRIENDID from FRIENDSHIP where USER_ID = ? " +
+                "intersect select FRIEND_ID from FRIENDSHIP where USER_ID = ?) left join USERS on FRIENDID=USER_ID";
+        return jdbcTemplate.query(sqlQuery, this::mapRowToUser, userId, userId2);
     }
 }
