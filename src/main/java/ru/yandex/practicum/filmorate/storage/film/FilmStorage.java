@@ -18,14 +18,6 @@ public interface FilmStorage {
 
     Film getFilmById(int id);
 
-    Mpa getMpaById(int id);
-
-    List<Mpa> getMpas();
-
-    Genre getGenreById(int id);
-
-    List<Genre> getGenres();
-
     boolean addLike(int userId, int friendId);
 
     boolean removeLike(int userId, int friendId);

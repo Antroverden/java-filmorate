@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.dao;
+package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
@@ -12,7 +12,6 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -165,48 +164,6 @@ public class FilmDbStorage implements FilmStorage {
                 .duration(resultSet.getInt("DURATION"))
                 .mpa(new Mpa(resultSet.getInt("RATING_ID"), resultSet.getString("RATING_NAME")))
                 .build();
-    }
-
-    @Override
-    public Mpa getMpaById(int id) {
-        try {
-            String sqlQuery = "select* from RATING where RATING_ID = ?";
-            return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToMpa, id);
-        } catch (EmptyResultDataAccessException e) {
-            log.warn("Ошибка валидации наличия рейтинга");
-            throw new NotFoundException("Рейтинг с таким айди отсутствует");
-        }
-    }
-
-    @Override
-    public List<Mpa> getMpas() {
-        String sqlQuery = "select* from RATING";
-        return jdbcTemplate.query(sqlQuery, this::mapRowToMpa);
-    }
-
-    private Mpa mapRowToMpa(ResultSet resultSet, int rowNum) throws SQLException {
-        return new Mpa(resultSet.getInt("RATING_ID"), resultSet.getString("RATING_NAME"));
-    }
-
-    @Override
-    public Genre getGenreById(int id) {
-        try {
-            String sqlQuery = "select* from GENRE where GENRE_ID = ?";
-            return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToGenre, id);
-        } catch (EmptyResultDataAccessException e) {
-            log.warn("Ошибка валидации наличия жанра");
-            throw new NotFoundException("Жанр с таким айди отсутствует");
-        }
-    }
-
-    @Override
-    public List<Genre> getGenres() {
-        String sqlQuery = "select* from GENRE";
-        return jdbcTemplate.query(sqlQuery, this::mapRowToGenre);
-    }
-
-    private Genre mapRowToGenre(ResultSet resultSet, int rowNum) throws SQLException {
-        return new Genre(resultSet.getInt("GENRE_ID"), resultSet.getString("NAME"));
     }
 
     @Override
