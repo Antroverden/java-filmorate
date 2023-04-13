@@ -90,54 +90,34 @@ public class FilmDbStorage implements FilmStorage {
             updateGenresToDB(film);
             film.getGenres().clear();
             HashMap<Integer, Film> filmForGenre = new HashMap<>(Map.of(film.getId(), film));
-            addGenresToFilms(filmForGenre);
+            fetchGenresToFilmsFromDB(filmForGenre);
             return filmForGenre.get(film.getId());
         }
     }
 
-//    @Override
-//    public List<Film> getFilms() {
-//        String sqlQuery = "select* from FILM left join RATING on FILM.RATING_ID = RATING.RATING_ID";
-//        List<Film> films = jdbcTemplate.query(sqlQuery, this::mapRowToFilm);
-//        sqlQuery = "select FILM_ID, FILM_GENRE.GENRE_ID as GENREID, GENRE.NAME" +
-//                " from FILM_GENRE left join GENRE on FILM_GENRE.GENRE_ID = GENRE.GENRE_ID";
-//        List<Map<String, Object>> filmsToGenres = jdbcTemplate.queryForList(sqlQuery);
-//        filmsToGenres.forEach(rowMap -> {
-//            int id = (int) rowMap.get("ID");
-//            int genreId = (int) rowMap.get("GENREID");
-//            String genrename = (String) rowMap.get("NAME");
-//            films.get(id).getGenre().add(new Genre(genreId, genrename));
-//        });
-//        return films;
-//    }
-
-
-    private void fetchGenresFromDB(Film film) {
+    private void fetchGenresToFilmFromDB(Film film) {
         String queryToAddGenre = "select FILM_ID, FILM_GENRE.GENRE_ID as GENREID, GENRE.NAME" +
                 " from FILM_GENRE left join GENRE on FILM_GENRE.GENRE_ID = GENRE.GENRE_ID where FILM_ID = ?";
         HashMap<Integer, Film> forGenres = new HashMap<>();
         forGenres.put(film.getId(), film);
         List<Map<String, Object>> filmsToGenres = jdbcTemplate.queryForList(queryToAddGenre, film.getId());
-        filmsToGenres.forEach(rowMap -> {
-            int id = (int) rowMap.get("FILM_ID");
-            int genreId = (int) rowMap.get("GENREID");
-            String genrename = (String) rowMap.get("NAME");
-            if (forGenres.containsKey(id)) {
-                forGenres.get(id).getGenres().add(new Genre(genreId, genrename));
-            }
-        });
+        fetchGenresFromDB(forGenres, filmsToGenres);
     }
 
-    private void addGenresToFilms(Map<Integer, Film> films) {
+    private void fetchGenresToFilmsFromDB(Map<Integer, Film> films) {
         String queryToAddGenre = "select FILM_ID, FILM_GENRE.GENRE_ID as GENREID, GENRE.NAME" +
                 " from FILM_GENRE left join GENRE on FILM_GENRE.GENRE_ID = GENRE.GENRE_ID";
         List<Map<String, Object>> filmsToGenres = jdbcTemplate.queryForList(queryToAddGenre);
+        fetchGenresFromDB(films, filmsToGenres);
+    }
+
+    private void fetchGenresFromDB(Map<Integer, Film> films, List<Map<String, Object>> filmsToGenres) {
         filmsToGenres.forEach(rowMap -> {
             int id = (int) rowMap.get("FILM_ID");
             int genreId = (int) rowMap.get("GENREID");
-            String genrename = (String) rowMap.get("NAME");
+            String genreName = (String) rowMap.get("NAME");
             if (films.containsKey(id)) {
-                films.get(id).getGenres().add(new Genre(genreId, genrename));
+                films.get(id).getGenres().add(new Genre(genreId, genreName));
             }
         });
     }
@@ -159,7 +139,7 @@ public class FilmDbStorage implements FilmStorage {
             String ratingName = (String) rowMap.get("RATING_NAME");
             films.put(id, new Film(id, name, description, date, duration, new Mpa(ratingId, ratingName)));
         });
-        addGenresToFilms(films);
+        fetchGenresToFilmsFromDB(films);
         return new ArrayList<>(films.values());
     }
 
@@ -168,7 +148,7 @@ public class FilmDbStorage implements FilmStorage {
         try {
             String sqlQuery = "select* from FILM left join RATING on FILM.RATING_ID = RATING.RATING_ID where FILM_ID = ?";
             Film film = jdbcTemplate.queryForObject(sqlQuery, this::mapRowToFilm, id);
-            fetchGenresFromDB(film);
+            fetchGenresToFilmFromDB(film);
             return film;
         } catch (EmptyResultDataAccessException e) {
             log.warn("Ошибка валидации наличия фильма");
@@ -207,10 +187,6 @@ public class FilmDbStorage implements FilmStorage {
     private Mpa mapRowToMpa(ResultSet resultSet, int rowNum) throws SQLException {
         return new Mpa(resultSet.getInt("RATING_ID"), resultSet.getString("RATING_NAME"));
     }
-//    private List<Genre> getGenresByFilmId(int id) {
-//        String sqlQuery = "select* from FILM_GENRE where FILM_ID = ?";
-//        return jdbcTemplate.query(sqlQuery, BeanPropertyRowMapper.newInstance(Genre.class), id);
-//    }
 
     @Override
     public Genre getGenreById(int id) {
@@ -245,13 +221,6 @@ public class FilmDbStorage implements FilmStorage {
         String sqlQuery = "delete from LIKES where FILM_ID = ? and USER_ID = ?";
         return jdbcTemplate.update(sqlQuery, filmId, userId) == 1;
     }
-
-//    @Override
-//    public List<Film> getAllPopularFilms() {
-//        String sqlQuery = "select* from (select FILM_ID, COUNT(USER_ID) as count" +
-//                " from LIKES group by FILM_ID order by count desc) left join FILM on FILM.FILM_ID ";
-//        return jdbcTemplate.query(sqlQuery, this::mapRowToFilm);
-//    }
 
     @Override
     public List<Film> getPopularFilms(int count) {
