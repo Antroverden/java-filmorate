@@ -67,4 +67,19 @@ public class InMemoryFilmStorage implements FilmStorage {
     public List<Genre> getGenres() {
         return null;
     }
+
+    @Override
+    public boolean addLike(int userId, int friendId) {
+        return false;
+    }
+
+    @Override
+    public boolean removeLike(int userId, int friendId) {
+        return false;
+    }
+
+    @Override
+    public List<Film> getPopularFilms(int count) {
+        return null;
+    }
 }

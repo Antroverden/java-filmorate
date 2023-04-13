@@ -10,16 +10,13 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Data
 @Builder
 @AllArgsConstructor
 public class Film {
     private static final String DATE_OF_FIRST_FILM_RELEASE = "28.12.1895";
-    private final Set<Integer> likes = new HashSet<>();
     private int id;
     @NotBlank(message = "Имя не может состоять из пробелов")
     private String name;

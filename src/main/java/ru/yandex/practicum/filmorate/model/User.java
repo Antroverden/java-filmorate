@@ -8,12 +8,10 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Past;
 import java.time.LocalDate;
-import java.util.HashMap;
 
 @Data
 @Builder
 public class User {
-    private final HashMap<Integer, Boolean> friends = new HashMap<>();
     private int id;
     @NotBlank(message = "Адрес электронной почты не может состоять из пробелов")
     @Email(message = "Адрес электронной почты составлен неправильно")

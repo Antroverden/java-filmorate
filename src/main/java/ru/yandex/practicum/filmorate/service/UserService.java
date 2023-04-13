@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @Slf4j
@@ -51,18 +50,6 @@ public class UserService {
             log.warn("Ошибка валидации наличия юзера или друга юзера");
             throw new NotFoundException("Такого Юзера или друга нет");
         }
-    }
-
-    private Set<Integer> getFriendsById(int id) {
-        return getUserById(id).getFriends().keySet();
-    }
-
-    private List<User> getUsersByIds(Set<Integer> ids) {
-        ArrayList<User> users = new ArrayList<>(ids.size());
-        for (int i : ids) {
-            users.add(getUserById(i));
-        }
-        return users;
     }
 
     public User getUserById(int id) {

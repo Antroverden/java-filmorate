@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -38,12 +39,12 @@ public class FilmController {
     }
 
     @PutMapping("/films/{id}/like/{userId}")
-    public Film addLike(@PathVariable int id, @PathVariable int userId) {
+    public HttpStatus addLike(@PathVariable int id, @PathVariable int userId) {
         return filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/films/{id}/like/{userId}")
-    public Film removeLike(@PathVariable int id, @PathVariable int userId) {
+    public HttpStatus removeLike(@PathVariable int id, @PathVariable int userId) {
         return filmService.removeLike(id, userId);
     }
 
