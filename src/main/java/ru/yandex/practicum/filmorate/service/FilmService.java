@@ -55,14 +55,6 @@ public class FilmService {
 
     public List<Film> getPopularFilms(int count) {
         return filmStorage.getPopularFilms(count);
-
-
-//            if (sortedFilms.size() <= 10) return sortedFilms;
-//            else return new ArrayList<>(sortedFilms.subList(0, 10));
-//        } else {
-//            if (sortedFilms.size() <= count) return sortedFilms;
-//            return new ArrayList<>(sortedFilms.subList(0, count));
-//        }
     }
 
     public Film getFilmById(int id) {
