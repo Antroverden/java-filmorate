@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -28,6 +27,10 @@ import java.util.Map;
 @Slf4j
 public class FilmDbStorage implements FilmStorage {
 
+    private static final String selectColumnsForFilm = "select FILM.FILM_ID, FILM.NAME, FILM.DESCRIPTION," +
+            " FILM.RELEASE_DATE, FILM.DURATION, FILM.RATING_ID, RATING_NAME";
+
+    private static final String queryForFilms = "select FILM.FILM_ID, FILM.NAME as FILMNAME, FILM.DESCRIPTION, FILM.RELEASE_DATE, FILM.DURATION, FILM.RATING_ID as RATINGID, RATING_NAME, genre.GENRE_ID as GENREID, genre.name from FILM left join RATING on FILM.RATING_ID = RATING.RATING_ID left join film_genre on film.film_id = FILM_GENRE.FIlM_ID left JOIN genre on film_genre.genre_id = genre.genre_id";
     private final JdbcTemplate jdbcTemplate;
 
     public FilmDbStorage(JdbcTemplate jdbcTemplate) {
@@ -51,12 +54,6 @@ public class FilmDbStorage implements FilmStorage {
         film.setId(keyHolder.getKey().intValue());
         addGenresToDB(film);
         return film;
-    }
-
-    private void updateGenresToDB(Film film) {
-        String sqlDelete = "delete from FILM_GENRE where FILM_ID = ?";
-        jdbcTemplate.update(sqlDelete, film.getId());
-        addGenresToDB(film);
     }
 
     private void addGenresToDB(Film film) {
@@ -86,49 +83,46 @@ public class FilmDbStorage implements FilmStorage {
             log.warn("Ошибка валидации наличия фильма");
             throw new NotFoundException("Фильм с таким айди отсутствует");
         } else {
-            updateGenresToDB(film);
+            String sqlDelete = "delete from FILM_GENRE where FILM_ID = ?";
+            jdbcTemplate.update(sqlDelete, film.getId());
+            addGenresToDB(film);
             film.getGenres().clear();
             HashMap<Integer, Film> filmForGenre = new HashMap<>(Map.of(film.getId(), film));
-            fetchGenresToFilmsFromDB(filmForGenre);
+            String queryToAddGenre = "select FILM_ID, FILM_GENRE.GENRE_ID as GENREID, GENRE.NAME" +
+                    " from FILM_GENRE left join GENRE on FILM_GENRE.GENRE_ID = GENRE.GENRE_ID";
+            List<Map<String, Object>> filmsToGenres = jdbcTemplate.queryForList(queryToAddGenre);
+            filmsToGenres.forEach(rowMap -> {
+                int id = (int) rowMap.get("FILM_ID");
+                int genreId = (int) rowMap.get("GENREID");
+                String genreName = (String) rowMap.get("NAME");
+                if (filmForGenre.containsKey(id)) {
+                    filmForGenre.get(id).getGenres().add(new Genre(genreId, genreName));
+                }
+            });
             return filmForGenre.get(film.getId());
         }
     }
 
-    private void fetchGenresToFilmFromDB(Film film) {
-        String queryToAddGenre = "select FILM_ID, FILM_GENRE.GENRE_ID as GENREID, GENRE.NAME" +
-                " from FILM_GENRE left join GENRE on FILM_GENRE.GENRE_ID = GENRE.GENRE_ID where FILM_ID = ?";
-        HashMap<Integer, Film> forGenres = new HashMap<>();
-        forGenres.put(film.getId(), film);
-        List<Map<String, Object>> filmsToGenres = jdbcTemplate.queryForList(queryToAddGenre, film.getId());
-        fetchGenresFromDB(forGenres, filmsToGenres);
-    }
-
-    private void fetchGenresToFilmsFromDB(Map<Integer, Film> films) {
-        String queryToAddGenre = "select FILM_ID, FILM_GENRE.GENRE_ID as GENREID, GENRE.NAME" +
-                " from FILM_GENRE left join GENRE on FILM_GENRE.GENRE_ID = GENRE.GENRE_ID";
-        List<Map<String, Object>> filmsToGenres = jdbcTemplate.queryForList(queryToAddGenre);
-        fetchGenresFromDB(films, filmsToGenres);
-    }
-
-    private void fetchGenresFromDB(Map<Integer, Film> films, List<Map<String, Object>> filmsToGenres) {
-        filmsToGenres.forEach(rowMap -> {
-            int id = (int) rowMap.get("FILM_ID");
-            int genreId = (int) rowMap.get("GENREID");
-            String genreName = (String) rowMap.get("NAME");
-            if (films.containsKey(id)) {
-                films.get(id).getGenres().add(new Genre(genreId, genreName));
-            }
-        });
+    @Override
+    public List<Film> getFilms() {
+        List<Map<String, Object>> filmsRows = jdbcTemplate.queryForList(queryForFilms);
+        return new ArrayList<>(constructFilmFromDB(filmsRows).values());
     }
 
     @Override
-    public List<Film> getFilms() {
-        String queryForFilm = "select FILM.FILM_ID, FILM.NAME as FILMNAME, FILM.DESCRIPTION, FILM.RELEASE_DATE," +
-                " FILM.DURATION, FILM.RATING_ID as RATINGID, RATING_NAME" +
-                " from FILM left join RATING on FILM.RATING_ID = RATING.RATING_ID";
+    public Film getFilmById(int id) {
+        String sqlQuery = queryForFilms + " where FILM.FILM_ID = ?";
+        List<Map<String, Object>> filmRow = jdbcTemplate.queryForList(sqlQuery, id);
+        Map<Integer, Film> film = constructFilmFromDB(filmRow);
+        if (film.isEmpty()) {
+            log.warn("Ошибка валидации наличия фильма");
+            throw new NotFoundException("Фильм с таким айди отсутствует");
+        } else return film.get(id);
+    }
+
+    private Map<Integer, Film> constructFilmFromDB(List<Map<String, Object>> filmsRows) {
         Map<Integer, Film> films = new HashMap<>();
-        List<Map<String, Object>> filmsRating = jdbcTemplate.queryForList(queryForFilm);
-        filmsRating.forEach(rowMap -> {
+        filmsRows.forEach(rowMap -> {
             int id = (int) rowMap.get("FILM_ID");
             String name = (String) rowMap.get("FILMNAME");
             String description = (String) rowMap.get("DESCRIPTION");
@@ -136,23 +130,14 @@ public class FilmDbStorage implements FilmStorage {
             int duration = (int) rowMap.get("DURATION");
             int ratingId = (int) rowMap.get("RATINGID");
             String ratingName = (String) rowMap.get("RATING_NAME");
-            films.put(id, new Film(id, name, description, date, duration, new Mpa(ratingId, ratingName)));
+            Integer genreId = (Integer) rowMap.get("GENREID");
+            String genreName = (String) rowMap.get("NAME");
+            films.computeIfAbsent(id, f -> new Film(id, name, description, date, duration, new Mpa(ratingId, ratingName)));
+            if (genreId != null) {
+                films.get(id).getGenres().add(new Genre(genreId, genreName));
+            }
         });
-        fetchGenresToFilmsFromDB(films);
-        return new ArrayList<>(films.values());
-    }
-
-    @Override
-    public Film getFilmById(int id) {
-        try {
-            String sqlQuery = "select* from FILM left join RATING on FILM.RATING_ID = RATING.RATING_ID where FILM_ID = ?";
-            Film film = jdbcTemplate.queryForObject(sqlQuery, this::mapRowToFilm, id);
-            fetchGenresToFilmFromDB(film);
-            return film;
-        } catch (EmptyResultDataAccessException e) {
-            log.warn("Ошибка валидации наличия фильма");
-            throw new NotFoundException("Фильм с таким айди отсутствует");
-        }
+        return films;
     }
 
     private Film mapRowToFilm(ResultSet resultSet, int rowNum) throws SQLException {

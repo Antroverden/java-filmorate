@@ -4,6 +4,6 @@ import lombok.Value;
 
 @Value
 public class Genre {
-    int id;
+    Integer id;
     String name;
 }
