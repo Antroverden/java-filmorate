@@ -27,10 +27,11 @@ import java.util.Map;
 @Slf4j
 public class FilmDbStorage implements FilmStorage {
 
-    private static final String selectColumnsForFilm = "select FILM.FILM_ID, FILM.NAME, FILM.DESCRIPTION," +
-            " FILM.RELEASE_DATE, FILM.DURATION, FILM.RATING_ID, RATING_NAME";
-
-    private static final String queryForFilms = "select FILM.FILM_ID, FILM.NAME as FILMNAME, FILM.DESCRIPTION, FILM.RELEASE_DATE, FILM.DURATION, FILM.RATING_ID as RATINGID, RATING_NAME, genre.GENRE_ID as GENREID, genre.name from FILM left join RATING on FILM.RATING_ID = RATING.RATING_ID left join film_genre on film.film_id = FILM_GENRE.FIlM_ID left JOIN genre on film_genre.genre_id = genre.genre_id";
+    private static final String queryForFilms = "select FILM.FILM_ID, FILM.NAME as FILMNAME, FILM.DESCRIPTION, " +
+            "FILM.RELEASE_DATE, FILM.DURATION, FILM.RATING_ID as RATINGID, RATING_NAME, " +
+            "GENRE.GENRE_ID as GENREID, GENRE.NAME from FILM left join RATING on FILM.RATING_ID = RATING.RATING_ID " +
+            "left join FILM_GENRE on FILM.FILM_ID = FILM_GENRE.FIlM_ID " +
+            "left join GENRE on FILM_GENRE.GENRE_ID = GENRE.GENRE_ID";
     private final JdbcTemplate jdbcTemplate;
 
     public FilmDbStorage(JdbcTemplate jdbcTemplate) {
