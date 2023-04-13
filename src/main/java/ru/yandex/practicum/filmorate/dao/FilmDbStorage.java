@@ -226,8 +226,8 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> getPopularFilms(int count) {
         String sqlQuery = "select FILM.FILM_ID, FILM.NAME, FILM.DESCRIPTION, FILM.RELEASE_DATE, FILM.DURATION," +
                 "FILM.RATING_ID, RATING_NAME from (select FILM_ID, COUNT(USER_ID) as count" +
-                " from LIKES group by FILM_ID order by count desc) as s left join FILM on s.FILM_ID = FILM.FILM_ID" +
-                " left join RATING on FILM.RATING_ID = RATING.RATING_ID limit ?";
+                " from LIKES group by FILM_ID) as s right join FILM on s.FILM_ID = FILM.FILM_ID" +
+                " left join RATING on FILM.RATING_ID = RATING.RATING_ID order by count desc limit ?";
         return jdbcTemplate.query(sqlQuery, this::mapRowToFilm, count);
     }
 }
