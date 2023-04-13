@@ -2,8 +2,6 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
 
 import javax.validation.Valid;
 import java.util.List;
