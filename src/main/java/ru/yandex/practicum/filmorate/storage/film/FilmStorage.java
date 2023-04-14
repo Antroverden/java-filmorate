@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import javax.validation.Valid;
-import java.util.HashMap;
+import java.util.List;
 
 public interface FilmStorage {
 
@@ -12,5 +12,13 @@ public interface FilmStorage {
 
     Film updateFilm(@Valid @RequestBody Film film);
 
-    HashMap<Integer, Film> getFilms();
+    List<Film> getFilms();
+
+    Film getFilmById(int id);
+
+    boolean addLike(int userId, int friendId);
+
+    boolean removeLike(int userId, int friendId);
+
+    List<Film> getPopularFilms(int count);
 }

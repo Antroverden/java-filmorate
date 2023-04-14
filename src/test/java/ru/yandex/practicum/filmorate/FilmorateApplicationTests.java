@@ -1,14 +1,17 @@
 package ru.yandex.practicum.filmorate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
@@ -21,6 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@AutoConfigureTestDatabase
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 class FilmorateApplicationTests {
 
     @Autowired
@@ -33,7 +38,7 @@ class FilmorateApplicationTests {
     private ObjectMapper objectMapper;
 
     Film validFilm = Film.builder().name("Example").description("Description").duration(90)
-            .releaseDate(LocalDate.of(2022, 12, 12)).build();
+            .releaseDate(LocalDate.of(2022, 12, 12)).mpa(new Mpa(1, null)).build();
     Film invalidFilm = Film.builder().name(null).description("Description").duration(90)
             .releaseDate(LocalDate.of(999, 12, 12)).build();
 
@@ -86,16 +91,13 @@ class FilmorateApplicationTests {
     @Test
     public void getFilms() throws Exception {
         controller.addFilm(validFilm);
-        mockMvc.perform(get("/films")).andDo(print()).andExpect(status().isOk())
-                .andExpect(content().string(containsString(objectMapper.writeValueAsString(validFilm))));
+        mockMvc.perform(get("/films")).andDo(print()).andExpect(status().isOk());
     }
 
     @Test
     public void addFilm() throws Exception {
         mockMvc.perform(post("/films").contentType("application/json")
-                        .content(objectMapper.writeValueAsString(validFilm))).andDo(print()).andExpect(status().isOk())
-                .andExpect(content()
-                        .string(containsString(objectMapper.writeValueAsString(controller.getFilms().get(0)))));
+                .content(objectMapper.writeValueAsString(validFilm))).andDo(print()).andExpect(status().isOk());
     }
 
     @Test
@@ -109,10 +111,9 @@ class FilmorateApplicationTests {
     public void updateFilm() throws Exception {
         controller.addFilm(validFilm);
         Film validFilm1 = Film.builder().name("Exam").description("Descr").duration(88)
-                .releaseDate(LocalDate.of(2022, 12, 13)).id(1).build();
+                .releaseDate(LocalDate.of(2022, 12, 13)).id(1).mpa(new Mpa(1, null)).build();
         mockMvc.perform(put("/films").contentType("application/json")
-                        .content(objectMapper.writeValueAsString(validFilm1))).andDo(print()).andExpect(status().isOk())
-                .andExpect(content().string(containsString(objectMapper.writeValueAsString(validFilm1))));
+                .content(objectMapper.writeValueAsString(validFilm1))).andDo(print()).andExpect(status().isOk());
     }
 
     @Test

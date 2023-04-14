@@ -5,7 +5,9 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 @Repository
 @Slf4j
@@ -35,7 +37,27 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public HashMap<Integer, Film> getFilms() {
-        return films;
+    public List<Film> getFilms() {
+        return new ArrayList<>(films.values());
+    }
+
+    @Override
+    public Film getFilmById(int id) {
+        return null;
+    }
+
+    @Override
+    public boolean addLike(int userId, int friendId) {
+        return false;
+    }
+
+    @Override
+    public boolean removeLike(int userId, int friendId) {
+        return false;
+    }
+
+    @Override
+    public List<Film> getPopularFilms(int count) {
+        return null;
     }
 }

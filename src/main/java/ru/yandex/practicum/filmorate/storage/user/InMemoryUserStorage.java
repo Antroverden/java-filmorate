@@ -5,7 +5,9 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 @Repository
 @Slf4j
@@ -34,7 +36,32 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public HashMap<Integer, User> getUsers() {
-        return users;
+    public List<User> getUsers() {
+        return new ArrayList<>(users.values());
+    }
+
+    @Override
+    public User getUserById(int id) {
+        return null;
+    }
+
+    @Override
+    public boolean addFriend(int userId, int friendId) {
+        return false;
+    }
+
+    @Override
+    public boolean removeFriend(int userId, int friendId) {
+        return false;
+    }
+
+    @Override
+    public List<User> getUserFriends(int userId) {
+        return null;
+    }
+
+    @Override
+    public List<User> getCommonFriends(int userId, int userId2) {
+        return null;
     }
 }
