@@ -13,21 +13,18 @@ Filmorate - веб-приложение, в котором можно стави
 ```
 git clone https://github.com/Antroverden/java-filmorate.git
 ```
-2) Запустите проект в выбранной IDE
-
-3) Перейдите по адресу
+2) Запустите проект в Intellij IDEA или введите в консоли
 ```
-http://localhost:8080
+mvn clean package
 ```
-4) Можно работать с проектом
-
-
-## Filmorate API ⚙️:
+3) Убедитесь, что у вас запущен Docker и введите в консоли
+```
+docker compose up
+```
 Примеры HTTP-запросов к контроллерам при запущенном приложении можно увидеть по ссылке:
 ```
 http://localhost:8080/swagger-ui/index.html
 ```
-
 
 ## Database schema:
 ![](schemaDb.png)
